@@ -11,6 +11,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "@saibotianlong:registry": "http://192.168.10.241/api/v4/projects/29/packages/npm/"
+  },
   "scripts": {
     "build": "vite build",
     "type-check": "tsc --noEmit"
