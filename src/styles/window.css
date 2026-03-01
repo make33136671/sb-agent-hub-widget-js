@@ -1,0 +1,92 @@
+/* === 聊天弹窗 === */
+.aw-window {
+  position: fixed;
+  bottom: 100px; right: 24px;
+  width: calc(100vw - 48px);
+  max-width: 400px;
+  height: calc(100vh - 150px);
+  max-height: 500px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: aw-slideUp 0.3s ease;
+  box-sizing: border-box;
+}
+.aw-window.hidden { display: none; }
+
+.aw-window.bottom-left {
+  right: auto;
+  left: 24px;
+}
+
+@media (max-width: 480px) {
+  .aw-window {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; max-width: none;
+    height: 100%; max-height: none;
+    border-radius: 0;
+  }
+}
+
+@keyframes aw-slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === 标题栏 === */
+.aw-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  flex-shrink: 0;
+}
+
+.aw-header-title {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.aw-header-status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+.aw-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.aw-close-btn {
+  background: transparent; border: none;
+  color: white; font-size: 24px;
+  cursor: pointer; padding: 0; line-height: 1;
+  opacity: 0.8; transition: opacity 0.2s;
+}
+.aw-close-btn:hover { opacity: 1; }
+
+/* === 聊天主体 === */
+.aw-body {
+  flex: 1; overflow: hidden;
+  background: #f5f7fb;
+}
+
+/* === Widget 根容器 === */
+.aw-root {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 99999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+.aw-root.bottom-left {
+  right: auto;
+  left: 24px;
+}
+
+@media (max-width: 480px) {
+  .aw-root { bottom: 16px; right: 16px; }
+  .aw-root.bottom-left { right: auto; left: 16px; }
+}
