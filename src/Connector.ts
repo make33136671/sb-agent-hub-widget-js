@@ -131,13 +131,13 @@ export class Connector {
     this.core.destroy()
   }
 
-  /** 登录后续操作：设置 UI 信息、加载历史、发送上线通知 */
+  /** 登录后续操作：设置 UI 信息、等待连接就绪、加载历史、发送上线通知 */
   private async postLogin(): Promise<void> {
     if (!this.authData || !this.chatUI) return
 
     this.loginTime = Date.now()
 
-    // 设置用户和客服信息到 UI
+    // 设置用户和客服信息到 UI（无需等待连接）
     this.chatUI.setUserInfo(
       this.authData.userID,
       this.authData.user?.nickname || '访客',
@@ -151,6 +151,9 @@ export class Connector {
         this.authData.agent.avatar || ''
       )
     }
+
+    // 等待 SDK 同步完成
+    await this.waitForConnection()
 
     this.chatUI.setInputEnabled(true)
 
@@ -226,6 +229,21 @@ export class Connector {
       reason,
       sessionDuration,
     }).catch(() => {})
+  }
+
+  /** 等待 SDK 连接就绪（connection:success），超时 10 秒 */
+  private waitForConnection(): Promise<void> {
+    return new Promise((resolve) => {
+      const onSuccess = () => {
+        clearTimeout(timer)
+        resolve()
+      }
+      const timer = setTimeout(() => {
+        this.core.off('connection:success', onSuccess)
+        resolve()
+      }, 10000)
+      this.core.on('connection:success', onSuccess)
+    })
   }
 
   /** 注册 core 事件 */
