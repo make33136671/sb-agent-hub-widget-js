@@ -26,6 +26,10 @@ export class Connector {
   private authData: GetImTokenResponse | null = null
   private onConnectionChange: OnConnectionChange
   private onNewMessage: OnNewMessage
+  /** 登录时间，用于计算 sessionDuration */
+  private loginTime: number = 0
+  /** 绑定的 beforeunload 处理器引用（用于移除） */
+  private boundBeforeUnload: (() => void) | null = null
 
   constructor(
     config: WidgetConfig,
@@ -121,6 +125,8 @@ export class Connector {
 
   /** 销毁 */
   destroy(): void {
+    this.sendOfflineNotification('manual')
+    this.removeBeforeUnloadListener()
     this.chatUI?.destroy()
     this.core.destroy()
   }
@@ -128,6 +134,8 @@ export class Connector {
   /** 登录后续操作：设置 UI 信息、加载历史、发送上线通知 */
   private async postLogin(): Promise<void> {
     if (!this.authData || !this.chatUI) return
+
+    this.loginTime = Date.now()
 
     // 设置用户和客服信息到 UI
     this.chatUI.setUserInfo(
@@ -167,13 +175,57 @@ export class Connector {
           nickname: this.authData.user?.nickname || '访客',
           avatar: this.authData.user?.avatar || '',
           isAnonymous: this.authData.user?.userType === 0,
+          userType: (this.authData.user?.userType ?? 0) as 0 | 1 | 2,
           source: this.config.platformKey,
           platformType: 0,
+          pageUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          pageTitle: typeof document !== 'undefined' ? document.title : undefined,
+          referrer: typeof document !== 'undefined' && document.referrer ? document.referrer : undefined,
         })
       } catch {
         // ignore
       }
+
+      // 注册页面关闭监听，发送下线通知（尽力而为）
+      this.registerBeforeUnloadListener()
     }
+  }
+
+  /** 注册 beforeunload 监听器 */
+  private registerBeforeUnloadListener(): void {
+    if (typeof window === 'undefined') return
+    this.removeBeforeUnloadListener()
+    this.boundBeforeUnload = () => this.sendOfflineNotification('window_close')
+    window.addEventListener('beforeunload', this.boundBeforeUnload)
+  }
+
+  /** 移除 beforeunload 监听器 */
+  private removeBeforeUnloadListener(): void {
+    if (this.boundBeforeUnload && typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.boundBeforeUnload)
+      this.boundBeforeUnload = null
+    }
+  }
+
+  /**
+   * 发送下线通知（fire-and-forget）
+   * 页面关闭场景下为尽力而为，服务端应依赖 WebSocket 断连检测兜底。
+   */
+  private sendOfflineNotification(reason: 'window_close' | 'idle_timeout' | 'network_error' | 'manual'): void {
+    const agentUserID = this.authData?.agent?.agentUserId
+    const visitorId = this.authData?.userID
+    if (!agentUserID || !visitorId) return
+
+    const sessionDuration = this.loginTime > 0
+      ? Math.round((Date.now() - this.loginTime) / 1000)
+      : undefined
+
+    // fire-and-forget：不等待结果
+    this.core.message.sendVisitorOffline(agentUserID, {
+      visitorId,
+      reason,
+      sessionDuration,
+    }).catch(() => {})
   }
 
   /** 注册 core 事件 */
