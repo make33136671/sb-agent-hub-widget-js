@@ -67,6 +67,9 @@ export class Connector {
   async connectAndLogin(): Promise<void> {
     this.onConnectionChange('connecting')
 
+    // 在 login 之前注册 sync 监听，避免竞态条件
+    const syncReady = this.waitForSync()
+
     // 尝试恢复会话
     const stored = this.core.session.loadAuthData()
     if (stored) {
@@ -74,6 +77,7 @@ export class Connector {
         await this.core.login(stored.userID, stored.token)
         this.authData = stored
         this.onConnectionChange('connected')
+        await syncReady
         await this.postLogin()
         return
       } catch {
@@ -107,6 +111,7 @@ export class Connector {
 
       this.authData = authData
       this.onConnectionChange('connected')
+      await syncReady
       await this.postLogin()
     } catch {
       this.onConnectionChange('error')
@@ -131,13 +136,13 @@ export class Connector {
     this.core.destroy()
   }
 
-  /** 登录后续操作：设置 UI 信息、等待连接就绪、加载历史、发送上线通知 */
+  /** 登录后续操作：设置 UI 信息、加载历史、发送上线通知（sync 已在外层等待完成） */
   private async postLogin(): Promise<void> {
     if (!this.authData || !this.chatUI) return
 
     this.loginTime = Date.now()
 
-    // 设置用户和客服信息到 UI（无需等待连接）
+    // 设置用户和客服信息到 UI
     this.chatUI.setUserInfo(
       this.authData.userID,
       this.authData.user?.nickname || '访客',
@@ -151,9 +156,6 @@ export class Connector {
         this.authData.agent.avatar || ''
       )
     }
-
-    // 等待 SDK 同步完成
-    await this.waitForConnection()
 
     this.chatUI.setInputEnabled(true)
 
@@ -231,18 +233,22 @@ export class Connector {
     }).catch(() => {})
   }
 
-  /** 等待 SDK 连接就绪（connection:success），超时 10 秒 */
-  private waitForConnection(): Promise<void> {
+  /**
+   * 等待 SDK 数据同步完成（sync:finished），超时 15 秒。
+   * 必须在 login() 之前调用，以避免事件被遗漏的竞态条件。
+   */
+  private waitForSync(): Promise<void> {
     return new Promise((resolve) => {
-      const onSuccess = () => {
+      const cleanup = () => {
         clearTimeout(timer)
-        resolve()
+        this.core.off('sync:finished', onFinished)
+        this.core.off('sync:failed', onFailed)
       }
-      const timer = setTimeout(() => {
-        this.core.off('connection:success', onSuccess)
-        resolve()
-      }, 10000)
-      this.core.on('connection:success', onSuccess)
+      const onFinished = () => { cleanup(); resolve() }
+      const onFailed = () => { cleanup(); resolve() }
+      const timer = setTimeout(() => { cleanup(); resolve() }, 15000)
+      this.core.on('sync:finished', onFinished)
+      this.core.on('sync:failed', onFailed)
     })
   }
 
