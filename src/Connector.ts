@@ -41,11 +41,11 @@ export class Connector {
     this.onNewMessage = onNewMessage
 
     this.core = createOpenIMCore({
-      apiAddr: config.apiAddr || 'http://localhost:10002',
-      wsAddr: config.wsAddr || 'ws://localhost:10001',
+      apiAddr: config.apiAddr || 'http://192.168.10.231:10002',
+      wsAddr: config.wsAddr || 'ws://192.168.10.231:10001',
       platformID: 5,
       logLevel: 2,
-      baseURL: config.baseURL || 'http://localhost:5153',
+      baseURL: config.baseURL || 'http://127.0.0.1:5153',
       platformKey: config.platformKey,
     })
 
