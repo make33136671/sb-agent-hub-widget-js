@@ -10,7 +10,7 @@ import {
   ImagePlugin,
   EmojiPlugin,
 } from '@saibotianlong/chat-ui'
-import type { WidgetConfig, ConnectionState } from './types/index'
+import type { WidgetConfig, ConnectionState, OnQueueUpdate } from './types/index'
 
 /** 连接状态变更回调 */
 export type OnConnectionChange = (state: ConnectionState) => void
@@ -26,10 +26,15 @@ export class Connector {
   private authData: GetImTokenResponse | null = null
   private onConnectionChange: OnConnectionChange
   private onNewMessage: OnNewMessage
+  private onQueueUpdate: OnQueueUpdate | null = null
   /** 登录时间，用于计算 sessionDuration */
   private loginTime: number = 0
   /** 绑定的 beforeunload 处理器引用（用于移除） */
   private boundBeforeUnload: (() => void) | null = null
+  /** 排队轮询定时器 */
+  private queuePollTimer: ReturnType<typeof setInterval> | null = null
+  /** 排队中的 chatUserId */
+  private queuedChatUserId: string = ''
 
   constructor(
     config: WidgetConfig,
@@ -41,8 +46,8 @@ export class Connector {
     this.onNewMessage = onNewMessage
 
     this.core = createOpenIMCore({
-      apiAddr: config.apiAddr || 'http://192.168.10.231:10002',
-      wsAddr: config.wsAddr || 'ws://192.168.10.231:10001',
+      apiAddr: config.apiAddr,
+      wsAddr: config.wsAddr,
       platformID: 5,
       logLevel: 2,
       baseURL: config.baseURL || 'http://127.0.0.1:5153',
@@ -94,8 +99,27 @@ export class Connector {
         {
           nickname: this.config.nickname,
           avatar: this.config.avatar,
+          source: 'js',
         }
       )
+
+      // 用服务端下发的 IM 地址更新 SDK 配置
+      if (authData.imConfig) {
+        this.core.updateImAddrs(authData.imConfig.apiUrl, authData.imConfig.wsUrl)
+      }
+
+      // 检查是否需要排队
+      if (authData.queue?.isQueued) {
+        this.queuedChatUserId = authData.userID
+        this.onConnectionChange('queued')
+        this.onQueueUpdate?.({
+          position: authData.queue.position,
+          totalWaiting: authData.queue.totalWaiting,
+          estimatedWaitMinutes: authData.queue.estimatedWaitMinutes,
+        })
+        this.startQueuePolling()
+        return
+      }
 
       this.core.session.saveAuthData(authData)
       await this.core.login(authData.userID, authData.token)
@@ -107,6 +131,7 @@ export class Connector {
         nickname: this.config.nickname,
         avatar: this.config.avatar,
         platformType: 0,
+        source: 'js',
       })
 
       this.authData = authData
@@ -130,6 +155,7 @@ export class Connector {
 
   /** 销毁 */
   destroy(): void {
+    this.stopQueuePolling()
     this.sendOfflineNotification('manual')
     this.removeBeforeUnloadListener()
     this.chatUI?.destroy()
@@ -250,6 +276,121 @@ export class Connector {
       this.core.on('sync:finished', onFinished)
       this.core.on('sync:failed', onFailed)
     })
+  }
+
+  /** 设置排队状态更新回调 */
+  setOnQueueUpdate(callback: OnQueueUpdate): void {
+    this.onQueueUpdate = callback
+  }
+
+  /** 取消排队 */
+  async cancelQueue(): Promise<void> {
+    if (!this.queuedChatUserId) return
+    this.stopQueuePolling()
+    try {
+      await fetch(`${this.config.baseURL || 'http://127.0.0.1:5153'}/api/ChatAuth/CancelQueue`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatUserId: this.queuedChatUserId }),
+      })
+    } catch { /* ignore */ }
+    this.queuedChatUserId = ''
+    this.onConnectionChange('disconnected')
+  }
+
+  /** 开始排队轮询（每 5 秒查询一次） */
+  private startQueuePolling(): void {
+    this.stopQueuePolling()
+    this.queuePollTimer = setInterval(() => this.pollQueuePosition(), 5000)
+  }
+
+  /** 停止排队轮询 */
+  private stopQueuePolling(): void {
+    if (this.queuePollTimer) {
+      clearInterval(this.queuePollTimer)
+      this.queuePollTimer = null
+    }
+  }
+
+  /** 轮询排队位置 */
+  private async pollQueuePosition(): Promise<void> {
+    if (!this.queuedChatUserId) {
+      this.stopQueuePolling()
+      return
+    }
+    try {
+      const baseURL = this.config.baseURL || 'http://127.0.0.1:5153'
+      const resp = await fetch(
+        `${baseURL}/api/ChatAuth/QueuePosition?chatUserId=${encodeURIComponent(this.queuedChatUserId)}`
+      )
+      if (!resp.ok) return
+      const result = await resp.json()
+      if (result.code !== 0) return
+
+      if (!result.data.isQueued) {
+        // 排队结束，重新认证
+        this.stopQueuePolling()
+        this.queuedChatUserId = ''
+        this.onConnectionChange('connecting')
+        await this.connectAndLogin()
+      } else {
+        this.onQueueUpdate?.({
+          position: result.data.position,
+          totalWaiting: result.data.totalWaiting,
+          estimatedWaitMinutes: result.data.estimatedWaitMinutes,
+        })
+      }
+    } catch { /* ignore */ }
+  }
+
+  /** 提交访客表单 */
+  async submitVisitorForm(formId: number, formData: Record<string, string>): Promise<boolean> {
+    try {
+      const baseURL = this.config.baseURL || 'http://127.0.0.1:5153'
+      const resp = await fetch(`${baseURL}/api/ChatAuth/SubmitVisitorForm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platformKey: this.config.platformKey,
+          formId,
+          formData: JSON.stringify(formData),
+        }),
+      })
+      return resp.ok
+    } catch {
+      return false
+    }
+  }
+
+  /** 提交满意度评价 */
+  async submitRating(rating: number, comment: string): Promise<boolean> {
+    try {
+      const baseURL = this.config.baseURL || 'http://127.0.0.1:5153'
+      const resp = await fetch(`${baseURL}/api/Rating/Submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chatUserId: this.authData?.userID || '',
+          agentId: 0,
+          rating,
+          comment,
+          conversationId: '',
+        }),
+      })
+      return resp.ok
+    } catch {
+      return false
+    }
+  }
+
+  /** 获取功能开关 */
+  getFeatureFlags() {
+    return this.authData?.features || null
+  }
+
+  /** 获取访客表单配置 */
+  getVisitorForm() {
+    return this.authData?.visitorForm || null
   }
 
   /** 注册 core 事件 */
