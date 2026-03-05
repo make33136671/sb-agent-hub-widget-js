@@ -55,6 +55,9 @@ export class Widget {
       (state: ConnectionState) => {
         this.floatingButton.setConnectionState(state)
         this.chatWindow.setConnectionState(state)
+        if (state !== 'queued') {
+          this.chatWindow.removeQueueOverlay()
+        }
       },
       () => {
         // 新消息到来，如果窗口关闭则增加未读数
@@ -63,6 +66,16 @@ export class Widget {
         }
       }
     )
+
+    // 排队状态更新
+    this.connector.setOnQueueUpdate((info) => {
+      this.chatWindow.showQueueOverlay(info.position, info.totalWaiting, info.estimatedWaitMinutes)
+      // 绑定取消按钮
+      const cancelBtn = this.chatWindow.getQueueCancelButton()
+      if (cancelBtn) {
+        cancelBtn.onclick = () => this.connector.cancelQueue()
+      }
+    })
 
     document.body.appendChild(this.hostEl)
   }
@@ -80,7 +93,7 @@ export class Widget {
       if (!this.initialized) {
         this.initialized = true
         this.connector.initUI(this.chatWindow.getBody())
-        this.connector.connectAndLogin()
+        this.startConnection()
       }
     }
   }
@@ -95,8 +108,46 @@ export class Widget {
     if (this.isOpen) this.toggle()
   }
 
+  /** 连接并处理表单 */
+  private async startConnection(): Promise<void> {
+    await this.connector.connectAndLogin()
+
+    // 连接成功后检查是否需要显示访客表单
+    const visitorForm = this.connector.getVisitorForm()
+    if (visitorForm) {
+      this.chatWindow.showVisitorForm(
+        visitorForm,
+        async (data) => {
+          await this.connector.submitVisitorForm(visitorForm.formId, data)
+          this.chatWindow.removeVisitorForm()
+        },
+        () => {
+          this.chatWindow.removeVisitorForm()
+        }
+      )
+    }
+  }
+
+  /** 显示满意度评价（可在关闭时调用） */
+  private showRating(): void {
+    const features = this.connector.getFeatureFlags()
+    if (!features?.enableSatisfactionRating) return
+
+    this.chatWindow.showRatingOverlay(
+      async (rating, comment) => {
+        await this.connector.submitRating(rating, comment)
+        this.chatWindow.removeRatingOverlay()
+      },
+      () => {
+        this.chatWindow.removeRatingOverlay()
+      }
+    )
+  }
+
   /** 销毁 Widget */
   destroy(): void {
+    // 销毁前显示评价
+    this.showRating()
     this.connector.destroy()
     this.hostEl.remove()
   }

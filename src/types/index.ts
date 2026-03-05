@@ -25,7 +25,10 @@ export interface WidgetConfig {
 }
 
 /** 连接状态 */
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error'
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error' | 'queued'
+
+/** 排队状态回调 */
+export type OnQueueUpdate = (info: { position: number; totalWaiting: number; estimatedWaitMinutes: number }) => void
 
 declare global {
   interface Window {

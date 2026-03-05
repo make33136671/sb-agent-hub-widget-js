@@ -108,8 +108,8 @@ export class Connector {
         this.core.updateImAddrs(authData.imConfig.apiUrl, authData.imConfig.wsUrl)
       }
 
-      // 检查是否需要排队
-      if (authData.queue?.isQueued) {
+      // 排队开关：仅当服务端启用排队且返回排队信息时才进入排队
+      if (authData.features?.enableQueue && authData.queue?.isQueued) {
         this.queuedChatUserId = authData.userID
         this.onConnectionChange('queued')
         this.onQueueUpdate?.({

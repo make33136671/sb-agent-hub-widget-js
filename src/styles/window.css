@@ -90,3 +90,214 @@
   .aw-root { bottom: 16px; right: 16px; }
   .aw-root.bottom-left { right: auto; left: 16px; }
 }
+
+/* === 排队遮罩 === */
+.aw-queue-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(245, 247, 251, 0.95);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+.aw-queue-card {
+  text-align: center;
+  padding: 32px 24px;
+}
+.aw-queue-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.aw-queue-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+.aw-queue-position,
+.aw-queue-waiting,
+.aw-queue-time {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+.aw-queue-position strong {
+  font-size: 24px;
+  color: #3b82f6;
+}
+.aw-queue-cancel-btn {
+  margin-top: 20px;
+  padding: 8px 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.aw-queue-cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* === 访客表单遮罩 === */
+.aw-form-overlay {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+.aw-form-card {
+  width: 100%;
+  padding: 24px;
+}
+.aw-form-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+.aw-form-field {
+  margin-bottom: 14px;
+}
+.aw-form-field label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.aw-form-field input,
+.aw-form-field select,
+.aw-form-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.aw-form-field input:focus,
+.aw-form-field select:focus,
+.aw-form-field textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+.aw-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.aw-form-submit-btn {
+  flex: 1;
+  padding: 10px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-form-submit-btn:hover { background: #2563eb; }
+.aw-form-skip-btn {
+  padding: 10px 16px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-form-skip-btn:hover { background: #f3f4f6; }
+
+/* === 满意度评价遮罩 === */
+.aw-rating-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.aw-rating-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+}
+.aw-rating-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+.aw-rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.aw-star {
+  font-size: 28px;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.aw-star.active, .aw-star.hover { color: #f59e0b; }
+.aw-rating-label {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  min-height: 18px;
+}
+.aw-rating-comment {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+.aw-rating-comment:focus {
+  border-color: #3b82f6;
+}
+.aw-rating-actions {
+  display: flex;
+  gap: 10px;
+}
+.aw-rating-submit-btn {
+  flex: 1;
+  padding: 8px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-rating-submit-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+.aw-rating-submit-btn:not(:disabled):hover { background: #2563eb; }
+.aw-rating-skip-btn {
+  padding: 8px 14px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-rating-skip-btn:hover { background: #f3f4f6; }
