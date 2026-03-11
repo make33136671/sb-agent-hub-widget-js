@@ -185,13 +185,21 @@ export class Connector {
 
     this.chatUI.setInputEnabled(true)
 
-    // 加载历史消息
+    // 加载历史消息（群聊模式用 groupId + sessionType=3）
     if (this.authData.agent?.agentUserId) {
       try {
-        const conv = await this.core.conversation.getOne(this.authData.agent.agentUserId)
+        const groupId = this.authData.agent?.groupId
+        const conv = groupId
+          ? await this.core.conversation.getOne(groupId, 3)
+          : await this.core.conversation.getOne(this.authData.agent.agentUserId)
         if (conv) {
           const messages = await this.core.conversation.getHistory(conv.conversationID, 100)
-          this.chatUI.setMessages(messages)
+          // 过滤掉群组系统通知
+          const filtered = messages.filter(m => {
+            const ct = Number(m.contentType)
+            return !(ct >= 1501 && ct <= 1599)
+          })
+          this.chatUI.setMessages(filtered)
           this.chatUI.scrollToBottom()
         }
       } catch {
