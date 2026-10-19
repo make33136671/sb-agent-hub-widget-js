@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@saiboniuma/chat-ui@0.1.1'
+  - '@saiboniuma/realtime-core@0.1.0'

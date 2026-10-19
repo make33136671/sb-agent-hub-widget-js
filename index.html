@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Widget 测试页面</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; background: #f5f5f5; }
+    h1 { color: #333; }
+    p { color: #666; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <h1>客服 Widget 测试页面</h1>
+  <p>这是一个模拟的第三方网站页面，用于测试嵌入式客服 Widget。</p>
+  <p>Widget 将以浮动按钮的形式出现在页面右下角。</p>
+  <p>点击浮动按钮即可打开聊天窗口，自动连接到 OpenIM 服务。</p>
+
+  <script>
+    window.SbAgentHub = {
+      platformKey: '',
+      baseURL: 'http://localhost:5153',
+      apiAddr: 'http://192.168.10.231:10002',
+      wsAddr: 'ws://192.168.10.231:10001',
+      position: 'bottom-right',
+      theme: 'light',
+      locale: 'zh-CN',
+    }
+  </script>
+  <script type="module" src="/src/index.ts"></script>
+</body>
+</html>

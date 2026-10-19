@@ -1,0 +1,303 @@
+/* === 聊天弹窗 === */
+.aw-window {
+  position: fixed;
+  bottom: 100px; right: 24px;
+  width: calc(100vw - 48px);
+  max-width: 400px;
+  height: calc(100vh - 150px);
+  max-height: 500px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: aw-slideUp 0.3s ease;
+  box-sizing: border-box;
+}
+.aw-window.hidden { display: none; }
+
+.aw-window.bottom-left {
+  right: auto;
+  left: 24px;
+}
+
+@media (max-width: 480px) {
+  .aw-window {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; max-width: none;
+    height: 100%; max-height: none;
+    border-radius: 0;
+  }
+}
+
+@keyframes aw-slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === 标题栏 === */
+.aw-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  flex-shrink: 0;
+}
+
+.aw-header-title {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.aw-header-status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  transition: background-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+.aw-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.aw-close-btn {
+  background: transparent; border: none;
+  color: white; font-size: 24px;
+  cursor: pointer; padding: 0; line-height: 1;
+  opacity: 0.8; transition: opacity 0.2s;
+}
+.aw-close-btn:hover { opacity: 1; }
+
+/* === 聊天主体 === */
+.aw-body {
+  flex: 1; overflow: hidden;
+  background: #f5f7fb;
+}
+
+/* === Widget 根容器 === */
+.aw-root {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 99999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+.aw-root.bottom-left {
+  right: auto;
+  left: 24px;
+}
+
+@media (max-width: 480px) {
+  .aw-root { bottom: 16px; right: 16px; }
+  .aw-root.bottom-left { right: auto; left: 16px; }
+}
+
+/* === 排队遮罩 === */
+.aw-queue-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(245, 247, 251, 0.95);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+.aw-queue-card {
+  text-align: center;
+  padding: 32px 24px;
+}
+.aw-queue-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.aw-queue-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+.aw-queue-position,
+.aw-queue-waiting,
+.aw-queue-time {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+.aw-queue-position strong {
+  font-size: 24px;
+  color: #3b82f6;
+}
+.aw-queue-cancel-btn {
+  margin-top: 20px;
+  padding: 8px 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.aw-queue-cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* === 访客表单遮罩 === */
+.aw-form-overlay {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+.aw-form-card {
+  width: 100%;
+  padding: 24px;
+}
+.aw-form-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+.aw-form-field {
+  margin-bottom: 14px;
+}
+.aw-form-field label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.aw-form-field input,
+.aw-form-field select,
+.aw-form-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.aw-form-field input:focus,
+.aw-form-field select:focus,
+.aw-form-field textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+.aw-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.aw-form-submit-btn {
+  flex: 1;
+  padding: 10px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-form-submit-btn:hover { background: #2563eb; }
+.aw-form-skip-btn {
+  padding: 10px 16px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-form-skip-btn:hover { background: #f3f4f6; }
+
+/* === 满意度评价遮罩 === */
+.aw-rating-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.aw-rating-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+}
+.aw-rating-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+.aw-rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.aw-star {
+  font-size: 28px;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.aw-star.active, .aw-star.hover { color: #f59e0b; }
+.aw-rating-label {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  min-height: 18px;
+}
+.aw-rating-comment {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+.aw-rating-comment:focus {
+  border-color: #3b82f6;
+}
+.aw-rating-actions {
+  display: flex;
+  gap: 10px;
+}
+.aw-rating-submit-btn {
+  flex: 1;
+  padding: 8px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-rating-submit-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+.aw-rating-submit-btn:not(:disabled):hover { background: #2563eb; }
+.aw-rating-skip-btn {
+  padding: 8px 14px;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.aw-rating-skip-btn:hover { background: #f3f4f6; }
