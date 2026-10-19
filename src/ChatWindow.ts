@@ -1,5 +1,5 @@
-import type { ConnectionState } from './types/index'
-import type { VisitorFormConfig } from '@saibotianlong/openim-core'
+﻿import type { ConnectionState } from './types/index'
+import type { VisitorFormConfig } from '@saiboniuma/realtime-core'
 
 /** 聊天弹窗容器 */
 export class ChatWindow {
@@ -86,6 +86,7 @@ export class ChatWindow {
     const colors: Record<ConnectionState, string> = {
       connected: '#22c55e',
       connecting: '#f59e0b',
+      reconnecting: '#f59e0b',
       disconnected: '#ef4444',
       error: '#ef4444',
       queued: '#3b82f6',

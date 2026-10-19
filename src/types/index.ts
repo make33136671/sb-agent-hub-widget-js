@@ -1,4 +1,4 @@
-/** Widget 配置（通过 window.SbAgentHub 传入） */
+﻿/** Widget 配置（通过 window.SbAgentHub 传入） */
 export interface WidgetConfig {
   /** 平台密钥（必填） */
   platformKey: string
@@ -25,7 +25,7 @@ export interface WidgetConfig {
 }
 
 /** 连接状态 */
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error' | 'queued'
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | 'error' | 'queued'
 
 /** 排队状态回调 */
 export type OnQueueUpdate = (info: { position: number; totalWaiting: number; estimatedWaitMinutes: number }) => void

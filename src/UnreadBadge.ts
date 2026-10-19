@@ -1,4 +1,4 @@
-/** 未读消息角标 */
+﻿/** 未读消息角标 */
 export class UnreadBadge {
   private el: HTMLElement
   private count = 0

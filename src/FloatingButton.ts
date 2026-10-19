@@ -1,4 +1,4 @@
-import type { ConnectionState } from './types/index'
+﻿import type { ConnectionState } from './types/index'
 import { UnreadBadge } from './UnreadBadge'
 
 /** 聊天图标 SVG */

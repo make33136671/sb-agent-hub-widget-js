@@ -1,4 +1,4 @@
-import type { WidgetConfig, ConnectionState } from './types/index'
+﻿import type { WidgetConfig, ConnectionState } from './types/index'
 import { FloatingButton } from './FloatingButton'
 import { ChatWindow } from './ChatWindow'
 import { Connector } from './Connector'

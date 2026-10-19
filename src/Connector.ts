@@ -1,15 +1,16 @@
-import {
-  createOpenIMCore,
-  type OpenIMClient,
-  type GetImTokenResponse,
+﻿import {
+  createRealtimeCore,
+  MessageStatus,
+  type RealtimeClient,
+  type GetTokenResponse,
   type Message,
-} from '@saibotianlong/openim-core'
+} from '@saiboniuma/realtime-core'
 import {
   ChatUI,
   TextPlugin,
   ImagePlugin,
   EmojiPlugin,
-} from '@saibotianlong/chat-ui'
+} from '@saiboniuma/chat-ui'
 import type { WidgetConfig, ConnectionState, OnQueueUpdate } from './types/index'
 
 /** 连接状态变更回调 */
@@ -20,10 +21,10 @@ export type OnNewMessage = (message: Message) => void
 
 /** Connector 连接 core + UI */
 export class Connector {
-  private core: OpenIMClient
+  private core: RealtimeClient
   private chatUI: ChatUI | null = null
   private config: WidgetConfig
-  private authData: GetImTokenResponse | null = null
+  private authData: GetTokenResponse | null = null
   private onConnectionChange: OnConnectionChange
   private onNewMessage: OnNewMessage
   private onQueueUpdate: OnQueueUpdate | null = null
@@ -45,10 +46,8 @@ export class Connector {
     this.onConnectionChange = onConnectionChange
     this.onNewMessage = onNewMessage
 
-    this.core = createOpenIMCore({
-      apiAddr: config.apiAddr,
+    this.core = createRealtimeCore({
       wsAddr: config.wsAddr,
-      platformID: 5,
       logLevel: 2,
       baseURL: config.baseURL || 'http://127.0.0.1:5153',
       platformKey: config.platformKey,
@@ -92,7 +91,7 @@ export class Connector {
 
     // 新登录
     try {
-      const authData = await this.core.auth.getImTokenSimple(
+      const authData = await this.core.auth.getTokenSimple(
         this.config.platformKey,
         this.config.userId,
         0,
@@ -103,9 +102,14 @@ export class Connector {
         }
       )
 
-      // 用服务端下发的 IM 地址更新 SDK 配置
-      if (authData.imConfig) {
-        this.core.updateImAddrs(authData.imConfig.apiUrl, authData.imConfig.wsUrl)
+      // 用服务端下发的 Realtime 地址更新配置
+      if (authData.realtimeConfig) {
+        this.core.updateRealtimeAddrs(authData.realtimeConfig.wsUrl)
+      }
+
+      // 设置当前会话 ID
+      if (authData.agent?.conversationId) {
+        this.core.setConversationId(authData.agent.conversationId)
       }
 
       // 排队开关：仅当服务端启用排队且返回排队信息时才进入排队
@@ -144,12 +148,12 @@ export class Connector {
   }
 
   /** 获取 core 实例 */
-  getCore(): OpenIMClient {
+  getCore(): RealtimeClient {
     return this.core
   }
 
   /** 获取认证数据 */
-  getAuthData(): GetImTokenResponse | null {
+  getAuthData(): GetTokenResponse | null {
     return this.authData
   }
 
@@ -415,6 +419,10 @@ export class Connector {
       this.onConnectionChange('connecting')
     })
 
+    this.core.on('connection:reconnecting', () => {
+      this.onConnectionChange('reconnecting')
+    })
+
     this.core.on('token:expired', async () => {
       if (this.core.tokenRefresher.isActive()) {
         try {
@@ -429,6 +437,21 @@ export class Connector {
 
     this.core.on('message:received', (message: Message) => {
       this.onNewMessage(message)
+    })
+
+    this.core.on('message:withdrawn', ({ message }) => {
+      if (message) {
+        message.status = MessageStatus.Withdrawn
+        message.isWithdrawn = true
+        this.onNewMessage(message)
+      }
+    })
+
+    this.core.on('message:edited', (message: Message) => {
+      if (message) {
+        message.status = MessageStatus.Edited
+        this.onNewMessage(message)
+      }
     })
   }
 }
